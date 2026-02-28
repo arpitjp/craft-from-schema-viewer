@@ -4,6 +4,8 @@ Minecraft schematic viewer — load, display, and compare `.litematic` / `.schem
 
 Works standalone or embedded in any web page. Built on Three.js.
 
+**[Live Demo](https://arpitjp.github.io/craft-from-schema-viewer/)** — try it in your browser with sample schematics and drag-and-drop.
+
 ## Install
 
 ```bash
