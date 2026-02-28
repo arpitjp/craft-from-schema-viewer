@@ -1,0 +1,52 @@
+{
+  "name": "@craftfrom/schema-viewer",
+  "version": "0.1.0",
+  "description": "Minecraft schematic viewer — load, display, and compare .litematic / .schematic files in 3D. Standalone or embeddable.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc --emitDeclarationOnly",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "minecraft",
+    "schematic",
+    "litematic",
+    "viewer",
+    "3d",
+    "threejs",
+    "voxel"
+  ],
+  "author": "arpitjp",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arpitjp/craft-from-schema-viewer"
+  },
+  "peerDependencies": {
+    "three": ">=0.160.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "three": "^0.170.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.3.0"
+  }
+}

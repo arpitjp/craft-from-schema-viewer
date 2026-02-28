@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema Viewer Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #090b0c; }
+  #viewer { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="viewer"></div>
+<script type="module">
+  import { SchemaViewer } from "../src/index.ts";
+
+  const viewer = new SchemaViewer({
+    container: document.getElementById("viewer"),
+  });
+
+  // Drop JSON files onto the viewer, or load programmatically:
+  // viewer.loadFromURL("my-build", "/path/to/blocks.json");
+
+  window._viewer = viewer;
+</script>
+</body>
+</html>
