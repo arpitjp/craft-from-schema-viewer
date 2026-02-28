@@ -2,6 +2,7 @@ import type { ViewerConfig, ViewerEvents, SchematicData, SchematicEntry, BlockHo
 import { EventEmitter } from "./events";
 import { SceneManager } from "./scene";
 import { GALLERY_COLORS } from "./constants";
+import { parseFile, SUPPORTED_EXTENSIONS } from "./parsers";
 import {
   injectStyles,
   createViewerDOM,
@@ -165,31 +166,34 @@ export class SchemaViewer extends EventEmitter<ViewerEvents> {
   }
 
   /**
-   * Load schematic data from a JSON file (blocks.json format).
-   * Convenience method for fetching from a URL.
+   * Load schematic data from a URL.
+   * Supports .json (blocks.json format) and binary formats
+   * (.schematic, .schem, .litematic) by inspecting the URL extension.
    */
   async loadFromURL(name: string, url: string): Promise<SchematicEntry> {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Failed to fetch ${url}: ${resp.status}`);
+
+    const ext = url.split(/[?#]/)[0].split(".").pop()?.toLowerCase();
+    if (ext && ext !== "json" && SUPPORTED_EXTENSIONS.includes(`.${ext}` as any)) {
+      const blob = await resp.blob();
+      const file = new File([blob], `${name}.${ext}`);
+      return this.loadFromFile(file);
+    }
+
     const data: SchematicData = await resp.json();
     return this.addSchematic(name, data);
   }
 
   /**
-   * Load schematic data from a File object (JSON format only on client side).
-   * For .litematic/.schem, pass through a server-side parser.
+   * Load a schematic from a File object.
+   * Supports .schematic, .schem, .litematic (parsed client-side via NBT)
+   * and .json (blocks.json format).
    */
-  async loadFromFile(file: File): Promise<SchematicEntry | null> {
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (ext === "json") {
-      const text = await file.text();
-      const data: SchematicData = JSON.parse(text);
-      if (data.blocks && data.palette) {
-        const name = file.name.replace(/\.json$/, "");
-        return this.addSchematic(name, data);
-      }
-    }
-    return null;
+  async loadFromFile(file: File): Promise<SchematicEntry> {
+    const data = await parseFile(file);
+    const name = file.name.replace(/\.[^.]+$/, "");
+    return this.addSchematic(name, data);
   }
 
   private refresh(): void {
@@ -233,7 +237,11 @@ export class SchemaViewer extends EventEmitter<ViewerEvents> {
       const files = e.dataTransfer?.files;
       if (files) {
         for (const file of Array.from(files)) {
-          await this.loadFromFile(file);
+          try {
+            await this.loadFromFile(file);
+          } catch (err) {
+            console.error(`Failed to load ${file.name}:`, err);
+          }
         }
       }
     });
@@ -244,7 +252,11 @@ export class SchemaViewer extends EventEmitter<ViewerEvents> {
       const files = this.dom.addInput.files;
       if (files) {
         for (const file of Array.from(files)) {
-          await this.loadFromFile(file);
+          try {
+            await this.loadFromFile(file);
+          } catch (err) {
+            console.error(`Failed to load ${file.name}:`, err);
+          }
         }
       }
       this.dom.addInput.value = "";
