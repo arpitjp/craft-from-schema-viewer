@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>@craftfrom/schema-viewer — Demo</title>
-<meta name="description" content="Minecraft schematic viewer. Load, display, and compare .litematic files in 3D. Open-source npm package.">
+<meta name="description" content="Minecraft schematic viewer. Load, display, and compare .litematic, .schematic, .schem files in 3D. Open-source npm package.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -25,7 +25,6 @@
 body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;}
 ::selection{background:rgba(74,222,128,.25);color:#fff;}
 
-/* Header */
 .header {
   padding:16px 24px;
   display:flex;align-items:center;justify-content:space-between;
@@ -52,7 +51,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font
 }
 .header-link:hover{color:var(--green);border-color:var(--green);}
 
-/* Info strip */
 .info-strip{
   padding:10px 24px;
   font-size:12px;color:var(--text2);
@@ -71,13 +69,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font
 .info-strip .sep{color:var(--text3);}
 .info-strip .hint{color:var(--text3);font-size:11px;}
 
-/* Viewer container */
 #viewer-container{
   width:100%;height:calc(100vh - 90px);
   position:relative;
 }
 
-/* Toast */
 .toast{
   position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
   font-family:var(--mono);font-size:11px;
@@ -87,7 +83,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font
 }
 .toast.visible{opacity:1;}
 
-/* Responsive */
 @media(max-width:640px){
   .header{padding:12px 16px;}
   .info-strip{padding:8px 16px;font-size:11px;}
@@ -112,7 +107,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font
 <div class="info-strip">
   <code id="install-cmd" title="Click to copy">npm i @craftfrom/schema-viewer three</code>
   <span class="sep">|</span>
-  <span class="hint">Drop .json files to load your own schematics, or explore the samples below</span>
+  <span class="hint">Drop .json, .schematic, .schem, or .litematic files to load your own schematics, or explore the samples below</span>
 </div>
 
 <div id="viewer-container"></div>
@@ -128,272 +123,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font
 </script>
 
 <script type="module">
-/* ── Inline the viewer source (self-contained demo, no bundler needed) ── */
-
-/* events.ts */
-class EventEmitter {
-  #listeners = new Map();
-  on(event, fn) {
-    if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
-    this.#listeners.get(event).add(fn);
-    return () => this.off(event, fn);
-  }
-  off(event, fn) { this.#listeners.get(event)?.delete(fn); }
-  emit(event, ...args) { this.#listeners.get(event)?.forEach(fn => fn(...args)); }
-  removeAllListeners() { this.#listeners.clear(); }
-}
-
-/* constants */
-const GALLERY_COLORS = ["#4ade80","#60a5fa","#f472b6","#facc15","#a78bfa","#fb923c","#34d399","#f87171","#38bdf8","#c084fc"];
-const MOVE_SPEED = 40, ROTATE_SPEED = 1.5;
-
-/* ── Three.js imports ── */
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-
-/* ── Scene Manager ── */
-class SceneManager {
-  constructor(config) {
-    this.container = config.container;
-    this.onBlockHover = config.onBlockHover;
-    const bg = config.background ?? "#090b0c";
-    const w = this.container.clientWidth, h = this.container.clientHeight;
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(bg);
-    this.camera = new THREE.PerspectiveCamera(60, w/h, 0.1, 5000);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    this.container.appendChild(this.renderer.domElement);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    Object.assign(this.controls, { enableDamping:true, dampingFactor:.08, rotateSpeed:.8, minDistance:1, maxDistance:5000 });
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(1,2,1.5); this.scene.add(dl);
-    const bl = new THREE.DirectionalLight(0xffffff, 0.2); bl.position.set(-1,0.5,-1); this.scene.add(bl);
-    this.groups = new Map();
-    this.raycaster = new THREE.Raycaster();
-    this.mouse = new THREE.Vector2();
-    this.keys = {};
-    this.grid = null;
-    this._ro = new ResizeObserver(() => this._resize());
-    this._ro.observe(this.container);
-    this._kd = e => this._keydown(e); this._ku = e => { this.keys[e.key.toLowerCase()] = false; };
-    window.addEventListener("keydown", this._kd); window.addEventListener("keyup", this._ku);
-    window.addEventListener("blur", () => { this.keys = {}; });
-    if (this.onBlockHover) {
-      this.renderer.domElement.addEventListener("mousemove", e => this._hover(e));
-      this.renderer.domElement.addEventListener("mouseleave", () => this.onBlockHover(null,0,0));
-    }
-    this._startLoop();
-  }
-  addSchematic(id, name, data) {
-    this.removeSchematic(id);
-    const { group, lookup } = this._buildMesh(data);
-    group.userData.sid = id;
-    this.scene.add(group);
-    this.groups.set(id, { group, lookup, palette:data.palette, schematicId:id, schematicName:name });
-    this.fitCamera();
-  }
-  removeSchematic(id) {
-    const e = this.groups.get(id); if (!e) return;
-    this.scene.remove(e.group);
-    e.group.traverse(o => { o.geometry?.dispose(); const m=o.material; if(m){if(Array.isArray(m))m.forEach(x=>x.dispose());else m.dispose();} });
-    this.groups.delete(id); this.fitCamera();
-  }
-  setSchematicVisible(id, v) { const e = this.groups.get(id); if(e) e.group.visible = v; }
-  hasAny() { return this.groups.size > 0; }
-  fitCamera() {
-    const vis = [...this.groups.values()].filter(e => e.group.visible);
-    if (!vis.length) return;
-    const box = new THREE.Box3(); vis.forEach(e => box.expandByObject(e.group));
-    const center = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
-    const maxD = Math.max(sz.x,sz.y,sz.z);
-    this.controls.target.copy(center);
-    this.camera.position.set(center.x+maxD*.8,center.y+maxD*.5,center.z+maxD*1.2);
-    this.camera.lookAt(center); this.controls.update();
-    this.initPos = this.camera.position.clone(); this.initTarget = this.controls.target.clone();
-    if(this.grid) this.scene.remove(this.grid);
-    this.grid = new THREE.GridHelper(maxD*2,Math.floor(maxD*2),0x222222,0x181818);
-    this.grid.position.set(center.x,box.min.y-.5,center.z); this.scene.add(this.grid);
-  }
-  destroy() {
-    cancelAnimationFrame(this._af); this._ro.disconnect();
-    window.removeEventListener("keydown",this._kd); window.removeEventListener("keyup",this._ku);
-    for(const[id]of this.groups) this.removeSchematic(id);
-    this.renderer.dispose(); this.renderer.domElement.remove();
-  }
-  _buildMesh(data) {
-    const cg={}; for(const[x,y,z,bid]of data.blocks){(cg[bid]??=[]).push(x,y,z);}
-    const group=new THREE.Group(), geo=new THREE.BoxGeometry(1,1,1), lookup=new Map();
-    for(const[bid,coords]of Object.entries(cg)){
-      const rgb=data.palette[bid]??[128,128,128];
-      const mat=new THREE.MeshLambertMaterial({color:new THREE.Color(rgb[0]/255,rgb[1]/255,rgb[2]/255)});
-      const cnt=coords.length/3, mesh=new THREE.InstancedMesh(geo,mat,cnt), d=new THREE.Object3D();
-      for(let i=0;i<cnt;i++){
-        const bx=coords[i*3],by=coords[i*3+1],bz=coords[i*3+2];
-        d.position.set(bx,by,bz);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);
-        lookup.set(`${mesh.uuid}_${i}`,{bid,x:bx,y:by,z:bz});
-      }
-      mesh.instanceMatrix.needsUpdate=true;group.add(mesh);
-    }
-    return{group,lookup};
-  }
-  _resize(){const w=this.container.clientWidth,h=this.container.clientHeight;if(!w||!h)return;this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);}
-  _hover(e){
-    const rect=this.container.getBoundingClientRect();
-    this.mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
-    this.mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
-    this.raycaster.setFromCamera(this.mouse,this.camera);
-    const hits=this.raycaster.intersectObjects(this.scene.children,true);
-    for(const hit of hits){
-      if(hit.object.isInstancedMesh&&hit.instanceId!=null){
-        const sid=hit.object.parent?.userData?.sid,entry=sid?this.groups.get(sid):null;
-        if(!entry)continue;
-        const info=entry.lookup.get(`${hit.object.uuid}_${hit.instanceId}`);
-        if(info){const rgb=entry.palette[info.bid]??[128,128,128];this.onBlockHover({blockId:info.bid,position:[info.x,info.y,info.z],color:rgb,schematicName:entry.schematicName,schematicId:entry.schematicId},e.clientX,e.clientY);return;}
-      }
-    }
-    this.onBlockHover(null,0,0);
-  }
-  _isTyping(){const t=document.activeElement?.tagName;return t==="INPUT"||t==="TEXTAREA";}
-  _keydown(e){
-    if(this._isTyping())return;const k=e.key.toLowerCase();
-    const VK=new Set(["w","a","s","d","q","e","r","f","arrowup","arrowdown","arrowleft","arrowright","0","1","2","3","4","5","6"," "]);
-    if(!VK.has(k))return;this.keys[k]=true;if(k===" ")e.preventDefault();
-  }
-  _processKeys(dt){
-    if(!this.camera||!this.controls)return;
-    const sp=MOVE_SPEED*dt,rot=ROTATE_SPEED*dt,k=this.keys;
-    const camDir=new THREE.Vector3();this.camera.getWorldDirection(camDir);
-    const camRight=new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld,0).normalize();
-    let hFwd=camDir.clone();hFwd.y=0;if(hFwd.lengthSq()<.001)hFwd.set(0,0,-1);hFwd.normalize();
-    const hRight=new THREE.Vector3().crossVectors(hFwd,new THREE.Vector3(0,1,0)).normalize();
-    if(k.w){this.controls.target.addScaledVector(hFwd,sp);this.camera.position.addScaledVector(hFwd,sp);}
-    if(k.s){this.controls.target.addScaledVector(hFwd,-sp);this.camera.position.addScaledVector(hFwd,-sp);}
-    if(k.a){this.controls.target.addScaledVector(hRight,-sp);this.camera.position.addScaledVector(hRight,-sp);}
-    if(k.d){this.controls.target.addScaledVector(hRight,sp);this.camera.position.addScaledVector(hRight,sp);}
-    if(k[" "]){this.camera.position.y+=sp;this.controls.target.y+=sp;}
-    if(k.q)this.controls.autoRotateSpeed=-30;else if(k.e)this.controls.autoRotateSpeed=30;else this.controls.autoRotateSpeed=0;
-    this.controls.autoRotate=k.q||k.e||false;
-    if(k["0"]&&this.initPos){this.camera.position.copy(this.initPos);this.controls.target.copy(this.initTarget);this.controls.update();k["0"]=false;}
-  }
-  _startLoop(){let last=performance.now();const anim=(now)=>{this._af=requestAnimationFrame(anim);this._processKeys((now-last)/1000);last=now;this.controls.update();this.renderer.render(this.scene,this.camera);};this._af=requestAnimationFrame(anim);}
-}
-
-/* ── UI (minimal inline version) ── */
-const CSS = `
-.csv-root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'JetBrains Mono',monospace;color:#e0e0e0;}
-.csv-root *{box-sizing:border-box;}
-.csv-canvas-wrap{position:absolute;inset:0;}
-.csv-canvas-wrap canvas{display:block;width:100%!important;height:100%!important;}
-.csv-gallery{position:absolute;top:12px;right:12px;width:220px;max-height:calc(100% - 24px);overflow-y:auto;z-index:5;display:flex;flex-direction:column;gap:4px;}
-.csv-gallery::-webkit-scrollbar{width:3px;}.csv-gallery::-webkit-scrollbar-thumb{background:#333;border-radius:2px;}
-.csv-gallery-item{display:flex;align-items:center;gap:7px;padding:7px 9px;background:rgba(0,0,0,.7);border:1px solid #1e2022;border-radius:6px;cursor:default;transition:border-color .15s;}
-.csv-gallery-item:hover{border-color:#444;}.csv-gallery-item.hidden-item{opacity:.4;}
-.csv-gi-color{width:9px;height:9px;border-radius:2px;border:1px solid rgba(255,255,255,.1);flex-shrink:0;}
-.csv-gi-info{flex:1;min-width:0;}.csv-gi-name{font-size:10px;color:#e0e0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
-.csv-gi-meta{font-size:8px;color:#555;margin-top:1px;}
-.csv-gi-actions{display:flex;gap:3px;flex-shrink:0;}
-.csv-gi-btn{width:20px;height:20px;border-radius:3px;background:none;border:1px solid transparent;color:#555;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
-.csv-gi-btn:hover{border-color:#333;color:#999;}.csv-gi-btn.del:hover{border-color:#7f1d1d;color:#f87171;}.csv-gi-btn.vis.off{opacity:.4;}
-.csv-info{position:absolute;bottom:12px;left:12px;font-size:9px;color:#555;background:rgba(0,0,0,.7);padding:5px 8px;border:1px solid #1e2022;z-index:3;opacity:0;transition:opacity .3s;}
-.csv-info.visible{opacity:1;}
-.csv-tooltip{position:fixed;pointer-events:none;z-index:30;background:rgba(0,0,0,.88);border:1px solid #1e2022;padding:7px 10px;border-radius:5px;font-size:9px;color:#e0e0e0;opacity:0;transition:opacity .1s;white-space:nowrap;transform:translate(12px,-50%);}
-.csv-tooltip.visible{opacity:1;}
-.csv-tooltip .bt-name{font-weight:600;font-size:10px;margin-bottom:3px;}
-.csv-tooltip .bt-row{display:flex;align-items:center;gap:6px;}
-.csv-tooltip .bt-swatch{width:10px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,.1);}
-.csv-tooltip .bt-pos{color:#777;}.csv-tooltip .bt-schem{color:#555;font-size:8px;margin-top:2px;}
-.csv-drop-overlay{position:absolute;inset:0;background:rgba(9,11,12,.85);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:15;}
-.csv-drop-overlay.visible{opacity:1;pointer-events:auto;}.csv-drop-overlay span{font-size:13px;color:#4ade80;text-transform:uppercase;letter-spacing:3px;}
-.csv-add-bar{position:absolute;top:12px;left:12px;z-index:5;display:flex;gap:6px;}
-.csv-add-btn{font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 10px;border-radius:4px;background:rgba(0,0,0,.7);border:1px solid #1e2022;color:#777;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .15s;}
-.csv-add-btn:hover{border-color:#4ade80;color:#4ade80;}.csv-add-input{display:none;}
-`;
-
-function injectCSS(){if(document.getElementById("csv-s"))return;const s=document.createElement("style");s.id="csv-s";s.textContent=CSS;document.head.appendChild(s);}
-
-/* ── SchemaViewer (inline) ── */
-class SchemaViewer extends EventEmitter {
-  constructor(config) {
-    super();
-    this.entries = new Map();
-    this.colorIdx = 0;
-    injectCSS();
-    const c = config.container;
-    c.innerHTML = "";
-    const root = document.createElement("div"); root.className = "csv-root";
-    const cw = document.createElement("div"); cw.className = "csv-canvas-wrap"; root.appendChild(cw);
-    const gal = document.createElement("div"); gal.className = "csv-gallery"; root.appendChild(gal);
-    const info = document.createElement("div"); info.className = "csv-info"; root.appendChild(info);
-    const tip = document.createElement("div"); tip.className = "csv-tooltip"; document.body.appendChild(tip);
-    const dov = document.createElement("div"); dov.className = "csv-drop-overlay"; dov.innerHTML = "<span>Drop .json to add schematics</span>"; root.appendChild(dov);
-    const addBar = document.createElement("div"); addBar.className = "csv-add-bar";
-    const addLbl = document.createElement("label"); addLbl.className = "csv-add-btn"; addLbl.textContent = "+ Add";
-    const addIn = document.createElement("input"); addIn.type="file"; addIn.multiple=true; addIn.accept=".json"; addIn.className="csv-add-input";
-    addLbl.appendChild(addIn); addBar.appendChild(addLbl);
-    const clrBtn = document.createElement("button"); clrBtn.className = "csv-add-btn"; clrBtn.textContent = "Clear"; addBar.appendChild(clrBtn);
-    root.appendChild(addBar); c.appendChild(root);
-    this.dom = { root, cw, gal, info, tip, dov, addIn, clrBtn };
-    this.scene = new SceneManager({
-      container: cw,
-      background: config.background ?? "#090b0c",
-      onBlockHover: (inf, x, y) => {
-        if (inf) {
-          const n=inf.blockId.replace("minecraft:","");
-          tip.innerHTML=`<div class="bt-name">${n}</div><div class="bt-row"><div class="bt-swatch" style="background:rgb(${inf.color})"></div><span class="bt-pos">${inf.position.join(", ")}</span></div><div class="bt-schem">${inf.schematicName}</div>`;
-          tip.style.left=x+"px";tip.style.top=y+"px";tip.classList.add("visible");
-        } else tip.classList.remove("visible");
-      }
-    });
-    this._setupDrop(); this._setupAdd(addIn, clrBtn);
-  }
-  addSchematic(name, data, id) {
-    const sid = id ?? crypto.randomUUID().slice(0,8);
-    const color = GALLERY_COLORS[this.colorIdx++ % GALLERY_COLORS.length];
-    const entry = { id:sid, name, data, visible:true, color, blockCount:data.blocks.length, typeCount:Object.keys(data.palette).length };
-    this.entries.set(sid, entry);
-    this.scene.addSchematic(sid, name, data);
-    this._refresh();
-    this.emit("schematic:add", entry);
-    return entry;
-  }
-  removeSchematic(id) { this.entries.delete(id); this.scene.removeSchematic(id); this._refresh(); this.emit("schematic:remove", id); }
-  toggleSchematic(id) { const e=this.entries.get(id);if(!e)return;e.visible=!e.visible;this.scene.setSchematicVisible(id,e.visible);this._refresh(); }
-  clear() { for(const id of [...this.entries.keys()])this.removeSchematic(id);this.colorIdx=0; }
-  getSchematics() { return [...this.entries.values()]; }
-  async loadFromFile(file) {
-    if (!file.name.endsWith(".json")) return null;
-    const data = JSON.parse(await file.text());
-    if (data.blocks && data.palette) return this.addSchematic(file.name.replace(/\.json$/,""), data);
-    return null;
-  }
-  _refresh() {
-    const entries = this.getSchematics();
-    const g = this.dom.gal; g.innerHTML = "";
-    for (const e of entries) {
-      const el = document.createElement("div"); el.className = "csv-gallery-item"+(e.visible?"":" hidden-item");
-      el.innerHTML = `<div class="csv-gi-color" style="background:${e.color}"></div><div class="csv-gi-info"><div class="csv-gi-name" title="${e.name}">${e.name}</div><div class="csv-gi-meta">${e.blockCount.toLocaleString()} blocks · ${e.typeCount} types</div></div><div class="csv-gi-actions"><button class="csv-gi-btn vis ${e.visible?"":"off"}" data-id="${e.id}">${e.visible?"●":"○"}</button><button class="csv-gi-btn del" data-id="${e.id}">×</button></div>`;
-      g.appendChild(el);
-    }
-    g.querySelectorAll(".vis").forEach(b=>b.addEventListener("click",()=>this.toggleSchematic(b.dataset.id)));
-    g.querySelectorAll(".del").forEach(b=>b.addEventListener("click",()=>this.removeSchematic(b.dataset.id)));
-    const i=this.dom.info, vis=entries.filter(e=>e.visible), tot=vis.reduce((s,e)=>s+e.blockCount,0);
-    if(entries.length){i.textContent=`${entries.length} schematic${entries.length>1?"s":""} · ${tot.toLocaleString()} blocks`;i.classList.add("visible");}
-    else i.classList.remove("visible");
-  }
-  _setupDrop() {
-    const ov=this.dom.dov;let ct=0;
-    this.dom.root.addEventListener("dragenter",e=>{e.preventDefault();ct++;ov.classList.add("visible");});
-    this.dom.root.addEventListener("dragleave",()=>{ct--;if(ct<=0){ct=0;ov.classList.remove("visible");}});
-    this.dom.root.addEventListener("dragover",e=>e.preventDefault());
-    this.dom.root.addEventListener("drop",async e=>{e.preventDefault();ct=0;ov.classList.remove("visible");if(e.dataTransfer?.files)for(const f of e.dataTransfer.files)await this.loadFromFile(f);});
-  }
-  _setupAdd(input, clrBtn) {
-    input.addEventListener("change",async()=>{if(input.files)for(const f of input.files)await this.loadFromFile(f);input.value="";});
-    clrBtn.addEventListener("click",()=>this.clear());
-  }
-}
+import { SchemaViewer } from "./dist/index.js";
 
 /* ═══════════════════════════════════════════════════════
    Sample schematics — procedurally generated
