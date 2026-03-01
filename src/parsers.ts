@@ -8,13 +8,24 @@
  *   .litematic  — Litematica format (bit-packed palette indices in long arrays)
  */
 
-import nbt from "prismarine-nbt";
 import type { SchematicData, BlockTuple, Palette } from "./types";
 import { buildPalette } from "./palette";
 
 type SimplifiedNBT = Record<string, any>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _nbt: any = null;
+
+async function getNbt(): Promise<{ parse: Function; simplify: Function }> {
+  if (!_nbt) {
+    const mod = await import("prismarine-nbt");
+    _nbt = (mod as any).default ?? mod;
+  }
+  return _nbt;
+}
+
 async function parseNBT(buffer: ArrayBuffer): Promise<SimplifiedNBT> {
+  const nbt = await getNbt();
   const { parsed } = await nbt.parse(new Uint8Array(buffer) as any);
   return nbt.simplify(parsed) as SimplifiedNBT;
 }
