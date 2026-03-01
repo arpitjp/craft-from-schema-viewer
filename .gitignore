@@ -3,3 +3,4 @@ dist/
 !docs/dist/
 *.tsbuildinfo
 .DS_Store
+src/generated/

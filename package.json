@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/extract-textures.cjs",
     "build": "vite build && tsc --emitDeclarationOnly && cp dist/index.js dist/nbt-*.js docs/dist/",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts"
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.170.0",
+    "minecraft-assets": "^1.17.0",
     "three": "^0.170.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",
