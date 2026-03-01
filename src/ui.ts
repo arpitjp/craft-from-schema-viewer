@@ -21,7 +21,7 @@ const CSS = `
 .csv-gi-name { font-size:10px; color:#e0e0e0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
 .csv-gi-meta { font-size:8px; color:#555; margin-top:1px; }
 .csv-gi-actions { display:flex; gap:3px; flex-shrink:0; }
-.csv-gi-btn { width:20px; height:20px; border-radius:3px; background:none; border:1px solid transparent; color:#555; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+.csv-gi-btn { width:28px; height:28px; border-radius:4px; background:none; border:1px solid transparent; color:#666; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s; }
 .csv-gi-btn:hover { border-color:#333; color:#999; }
 .csv-gi-btn.del:hover { border-color:#7f1d1d; color:#f87171; }
 .csv-gi-btn.vis.off { opacity:.4; }
