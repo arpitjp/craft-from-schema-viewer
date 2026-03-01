@@ -1,4 +1,4 @@
-import * as l from "three";
+import * as E from "three";
 import { Controls as iA, Vector3 as m, MOUSE as b, TOUCH as D, Quaternion as H, Spherical as v, Vector2 as M, Ray as sA, Plane as BA, MathUtils as nA } from "three";
 class EA {
   constructor() {
@@ -1361,14 +1361,14 @@ function pr(a) {
     t.data[n] = Math.round(a[0] * s), t.data[n + 1] = Math.round(a[1] * s), t.data[n + 2] = Math.round(a[2] * s), t.data[n + 3] = 255;
   }
   e.putImageData(t, 0, 0);
-  const o = new l.CanvasTexture(A);
-  return o.magFilter = l.NearestFilter, o.minFilter = l.NearestFilter, o.colorSpace = l.SRGBColorSpace, o;
+  const o = new E.CanvasTexture(A);
+  return o.magFilter = E.NearestFilter, o.minFilter = E.NearestFilter, o.colorSpace = E.SRGBColorSpace, o;
 }
 function Cr(a) {
   const A = new Image();
   A.src = a;
-  const e = new l.Texture(A);
-  return e.magFilter = l.NearestFilter, e.minFilter = l.NearestFilter, e.colorSpace = l.SRGBColorSpace, A.onload = () => {
+  const e = new E.Texture(A);
+  return e.magFilter = E.NearestFilter, e.minFilter = E.NearestFilter, e.colorSpace = E.SRGBColorSpace, A.onload = () => {
     e.needsUpdate = !0;
   }, A.complete && (e.needsUpdate = !0), e;
 }
@@ -1382,12 +1382,12 @@ function Dr(a, A) {
 }
 const u = class u {
   constructor(A) {
-    this.animId = 0, this.groups = /* @__PURE__ */ new Map(), this.raycaster = new l.Raycaster(), this.mouse = new l.Vector2(), this.keys = {}, this.container = A.container, this.onBlockHover = A.onBlockHover;
+    this.animId = 0, this.groups = /* @__PURE__ */ new Map(), this.raycaster = new E.Raycaster(), this.mouse = new E.Vector2(), this.keys = {}, this.container = A.container, this.onBlockHover = A.onBlockHover;
     const e = A.background ?? CA, t = A.fov ?? DA, g = A.maxPixelRatio ?? bA, o = this.container.clientWidth, i = this.container.clientHeight;
-    this.scene = new l.Scene(), this.scene.background = new l.Color(e), this.camera = new l.PerspectiveCamera(t, o / i, 0.1, 5e3), this.renderer = new l.WebGLRenderer({ antialias: !0 }), this.renderer.setSize(o, i), this.renderer.setPixelRatio(Math.min(devicePixelRatio, g)), this.container.appendChild(this.renderer.domElement), this.controls = new cA(this.camera, this.renderer.domElement), this.controls.enableDamping = !0, this.controls.dampingFactor = 0.08, this.controls.rotateSpeed = 0.8, this.controls.minDistance = 1, this.controls.maxDistance = 5e3, this.scene.add(new l.AmbientLight(16777215, 0.5));
-    const s = new l.DirectionalLight(16777215, 0.9);
+    this.scene = new E.Scene(), this.scene.background = new E.Color(e), this.camera = new E.PerspectiveCamera(t, o / i, 0.1, 5e3), this.renderer = new E.WebGLRenderer({ antialias: !0 }), this.renderer.setSize(o, i), this.renderer.setPixelRatio(Math.min(devicePixelRatio, g)), this.container.appendChild(this.renderer.domElement), this.controls = new cA(this.camera, this.renderer.domElement), this.controls.enableDamping = !0, this.controls.dampingFactor = 0.08, this.controls.rotateSpeed = 0.8, this.controls.minDistance = 1, this.controls.maxDistance = 5e3, this.scene.add(new E.AmbientLight(16777215, 0.5));
+    const s = new E.DirectionalLight(16777215, 0.9);
     s.position.set(1, 2, 1.5), this.scene.add(s);
-    const n = new l.DirectionalLight(16777215, 0.2);
+    const n = new E.DirectionalLight(16777215, 0.2);
     n.position.set(-1, 0.5, -1), this.scene.add(n), this.resizeObserver = new ResizeObserver(() => this.handleResize()), this.resizeObserver.observe(this.container), this.boundKeyDown = (B) => this.handleKeyDown(B), this.boundKeyUp = (B) => this.handleKeyUp(B), window.addEventListener("keydown", this.boundKeyDown), window.addEventListener("keyup", this.boundKeyUp), window.addEventListener("blur", () => {
       this.keys = {};
     }), this.onBlockHover && (this.renderer.domElement.addEventListener("mousemove", (B) => this.handleMouseMove(B)), this.renderer.domElement.addEventListener("mouseleave", () => {
@@ -1428,10 +1428,10 @@ const u = class u {
   fitCamera() {
     const A = [...this.groups.values()].filter((i) => i.group.visible);
     if (A.length === 0) return;
-    const e = new l.Box3();
+    const e = new E.Box3();
     for (const i of A) e.expandByObject(i.group);
-    const t = e.getCenter(new l.Vector3()), g = e.getSize(new l.Vector3()), o = Math.max(g.x, g.y, g.z);
-    this.controls.target.copy(t), this.camera.position.set(t.x + o * 0.8, t.y + o * 0.5, t.z + o * 1.2), this.camera.lookAt(t), this.controls.update(), this.initPos = this.camera.position.clone(), this.initTarget = this.controls.target.clone(), this.grid && this.scene.remove(this.grid), this.grid = new l.GridHelper(o * 2, Math.floor(o * 2), 2236962, 1579032), this.grid.position.set(t.x, e.min.y - 0.5, t.z), this.scene.add(this.grid);
+    const t = e.getCenter(new E.Vector3()), g = e.getSize(new E.Vector3()), o = Math.max(g.x, g.y, g.z);
+    this.controls.target.copy(t), this.camera.position.set(t.x + o * 0.8, t.y + o * 0.5, t.z + o * 1.2), this.camera.lookAt(t), this.controls.update(), this.initPos = this.camera.position.clone(), this.initTarget = this.controls.target.clone(), this.grid && this.scene.remove(this.grid), this.grid = new E.GridHelper(o * 2, Math.floor(o * 2), 2236962, 1579032), this.grid.position.set(t.x, e.min.y - 0.5, t.z), this.scene.add(this.grid);
   }
   destroy() {
     cancelAnimationFrame(this.animId), this.resizeObserver.disconnect(), window.removeEventListener("keydown", this.boundKeyDown), window.removeEventListener("keyup", this.boundKeyUp);
@@ -1442,9 +1442,9 @@ const u = class u {
     const e = {};
     for (const [i, s, n, B] of A.blocks)
       e[B] || (e[B] = []), e[B].push(i, s, n);
-    const t = new l.Group(), g = new l.BoxGeometry(1, 1, 1), o = /* @__PURE__ */ new Map();
+    const t = new E.Group(), g = new E.BoxGeometry(1, 1, 1), o = /* @__PURE__ */ new Map();
     for (const [i, s] of Object.entries(e)) {
-      const n = A.palette[i] ?? [128, 128, 128], B = Dr(i, n), E = new l.MeshLambertMaterial({ map: B }), h = s.length / 3, c = new l.InstancedMesh(g, E, h), r = new l.Object3D();
+      const n = A.palette[i] ?? [128, 128, 128], B = Dr(i, n), l = new E.MeshLambertMaterial({ map: B }), h = s.length / 3, c = new E.InstancedMesh(g, l, h), r = new E.Object3D();
       for (let R = 0; R < h; R++) {
         const d = s[R * 3], w = s[R * 3 + 1], p = s[R * 3 + 2];
         r.position.set(d, w, p), r.updateMatrix(), c.setMatrixAt(R, r.matrix), o.set(`${c.uuid}_${R}`, { bid: i, x: d, y: w, z: p });
@@ -1464,19 +1464,19 @@ const u = class u {
     const t = this.raycaster.intersectObjects(this.scene.children, !0);
     for (const s of t)
       if (s.object.isInstancedMesh && s.instanceId != null) {
-        const n = s.object.parent, B = (g = n == null ? void 0 : n.userData) == null ? void 0 : g.sid, E = B ? this.groups.get(B) : void 0;
-        if (!E) continue;
-        const h = `${s.object.uuid}_${s.instanceId}`, c = E.lookup.get(h);
+        const n = s.object.parent, B = (g = n == null ? void 0 : n.userData) == null ? void 0 : g.sid, l = B ? this.groups.get(B) : void 0;
+        if (!l) continue;
+        const h = `${s.object.uuid}_${s.instanceId}`, c = l.lookup.get(h);
         if (c) {
-          const r = E.palette[c.bid] ?? [128, 128, 128];
+          const r = l.palette[c.bid] ?? [128, 128, 128];
           (o = this.onBlockHover) == null || o.call(
             this,
             {
               blockId: c.bid,
               position: [c.x, c.y, c.z],
               color: r,
-              schematicName: E.schematicName,
-              schematicId: E.schematicId
+              schematicName: l.schematicName,
+              schematicId: l.schematicId
             },
             A.clientX,
             A.clientY
@@ -1500,12 +1500,12 @@ const u = class u {
     this.keys[A.key.toLowerCase()] = !1;
   }
   processKeys(A) {
-    const e = GA * A, t = kA * A, g = new l.Vector3();
+    const e = GA * A, t = kA * A, g = new E.Vector3();
     this.camera.getWorldDirection(g);
-    const o = new l.Vector3(0, 1, 0), i = new l.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0).normalize();
+    const o = new E.Vector3(0, 1, 0), i = new E.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0).normalize();
     let s = g.clone();
     s.y = 0, s.lengthSq() < 1e-3 && (s.set(-this.camera.matrixWorld.elements[8], 0, -this.camera.matrixWorld.elements[10]).normalize(), s.lengthSq() < 1e-3 && s.set(0, 0, -1)), s.normalize();
-    const n = new l.Vector3().crossVectors(s, o).normalize(), B = this.keys;
+    const n = new E.Vector3().crossVectors(s, o).normalize(), B = this.keys;
     if (B.w && (this.controls.target.addScaledVector(s, e), this.camera.position.addScaledVector(s, e)), B.s && (this.controls.target.addScaledVector(s, -e), this.camera.position.addScaledVector(s, -e)), B.a && (this.controls.target.addScaledVector(n, -e), this.camera.position.addScaledVector(n, -e)), B.d && (this.controls.target.addScaledVector(n, e), this.camera.position.addScaledVector(n, e)), B.arrowup && (this.controls.target.addScaledVector(g, e), this.camera.position.addScaledVector(g, e)), B.arrowdown && (this.controls.target.addScaledVector(g, -e), this.camera.position.addScaledVector(g, -e)), B.arrowleft && (this.controls.target.addScaledVector(i, -e), this.camera.position.addScaledVector(i, -e)), B.arrowright && (this.controls.target.addScaledVector(i, e), this.camera.position.addScaledVector(i, e)), B[" "] && (this.camera.position.y += e, this.controls.target.y += e), B.q ? this.controls.autoRotateSpeed = -30 : B.e ? this.controls.autoRotateSpeed = 30 : this.controls.autoRotateSpeed = 0, this.controls.autoRotate = B.q || B.e || !1, B.r) {
       const c = this.camera.position.clone().sub(this.controls.target);
       c.applyAxisAngle(i, -t), this.camera.position.copy(this.controls.target).add(c);
@@ -1514,18 +1514,18 @@ const u = class u {
       const c = this.camera.position.clone().sub(this.controls.target);
       c.applyAxisAngle(i, t), this.camera.position.copy(this.controls.target).add(c);
     }
-    const E = this.camera.position.distanceTo(this.controls.target), h = {
+    const l = this.camera.position.distanceTo(this.controls.target), h = {
       1: () => g.clone().negate(),
       2: () => g.clone(),
       3: () => i.clone().negate(),
       4: () => i.clone(),
-      5: () => new l.Vector3(0, 1, 0),
-      6: () => new l.Vector3(0, -1, 0)
+      5: () => new E.Vector3(0, 1, 0),
+      6: () => new E.Vector3(0, -1, 0)
     };
     for (const [c, r] of Object.entries(h))
       if (B[c]) {
         const R = this.controls.target.clone(), d = r().normalize();
-        this.camera.position.copy(R).addScaledVector(d, E), this.camera.lookAt(R), this.controls.update(), B[c] = !1;
+        this.camera.position.copy(R).addScaledVector(d, l), this.camera.lookAt(R), this.controls.update(), B[c] = !1;
       }
     B[0] && this.initPos && this.initTarget && (this.camera.position.copy(this.initPos), this.controls.target.copy(this.initTarget), this.controls.update(), B[0] = !1);
   }
@@ -1707,7 +1707,7 @@ function P(a) {
 let X = null;
 async function Jr() {
   if (!X) {
-    const a = await import("./nbt-C0tfxqsY.js").then((A) => A.n);
+    const a = await import("./nbt-CYpMWJAB.js").then((A) => A.n);
     X = a.default ?? a;
   }
   return X;
@@ -1794,11 +1794,11 @@ function Or(a) {
   let i = 0;
   for (let n = 0; n < e; n++)
     for (let B = 0; B < t; B++)
-      for (let E = 0; E < A && !(i >= g.length); E++) {
+      for (let l = 0; l < A && !(i >= g.length); l++) {
         const h = g[i++];
         if (h === 0) continue;
         const c = Ir[h] ?? `minecraft:unknown_${h}`;
-        o.push([E, n, B, c]);
+        o.push([l, n, B, c]);
       }
   const s = new Set(o.map((n) => n[3]));
   return { blocks: o, palette: P(s) };
@@ -1834,18 +1834,18 @@ function Fr(a) {
         const N = s.get(w) ?? `minecraft:unknown_${w}`;
         N !== "minecraft:air" && n.push([d, r, R, N]);
       }
-  const E = new Set(n.map((r) => r[3]));
-  return { blocks: n, palette: P(E) };
+  const l = new Set(n.map((r) => r[3]));
+  return { blocks: n, palette: P(l) };
 }
 function Yr(a) {
   var g, o, i, s, n, B;
   const A = a.Regions ?? {}, e = [];
-  for (const E of Object.values(A)) {
-    const h = E.BlockStatePalette ?? [];
+  for (const l of Object.values(A)) {
+    const h = l.BlockStatePalette ?? [];
     if (h.length === 0) continue;
-    const c = Math.abs(((g = E.Size) == null ? void 0 : g.x) ?? 0), r = Math.abs(((o = E.Size) == null ? void 0 : o.y) ?? 0), R = Math.abs(((i = E.Size) == null ? void 0 : i.z) ?? 0);
+    const c = Math.abs(((g = l.Size) == null ? void 0 : g.x) ?? 0), r = Math.abs(((o = l.Size) == null ? void 0 : o.y) ?? 0), R = Math.abs(((i = l.Size) == null ? void 0 : i.z) ?? 0);
     if (c * r * R === 0) continue;
-    const w = ((s = E.Position) == null ? void 0 : s.x) ?? 0, p = ((n = E.Position) == null ? void 0 : n.y) ?? 0, N = ((B = E.Position) == null ? void 0 : B.z) ?? 0, I = Math.max(2, Math.ceil(Math.log2(h.length))), aA = (1 << I) - 1, L = E.BlockStates ?? [];
+    const w = ((s = l.Position) == null ? void 0 : s.x) ?? 0, p = ((n = l.Position) == null ? void 0 : n.y) ?? 0, N = ((B = l.Position) == null ? void 0 : B.z) ?? 0, I = Math.max(2, Math.ceil(Math.log2(h.length))), aA = (1 << I) - 1, L = l.BlockStates ?? [];
     if (L.length === 0) continue;
     const G = L.map((k) => BigInt(k));
     let T = 0;
@@ -1866,7 +1866,7 @@ function Yr(a) {
           z !== "minecraft:air" && e.push([y + w, k + p, f + N, z]);
         }
   }
-  const t = new Set(e.map((E) => E[3]));
+  const t = new Set(e.map((l) => l[3]));
   return { blocks: e, palette: P(t) };
 }
 function ur(a) {
@@ -1964,14 +1964,15 @@ function Wr(a, A) {
   i.className = "csv-tooltip", document.body.appendChild(i);
   let s = null;
   A.dragDrop && (s = document.createElement("div"), s.className = "csv-drop-overlay", s.innerHTML = "<span>Drop to add schematics</span>", e.appendChild(s));
-  const n = document.createElement("div");
-  n.className = "csv-add-bar";
-  const B = document.createElement("label");
-  B.className = "csv-add-btn", B.textContent = "+ Add";
-  const E = document.createElement("input");
-  E.type = "file", E.multiple = !0, E.accept = ".litematic,.schematic,.schem,.json", E.className = "csv-add-input", B.appendChild(E), n.appendChild(B);
-  const h = document.createElement("button");
-  return h.className = "csv-add-btn", h.textContent = "Clear", n.appendChild(h), e.appendChild(n), a.appendChild(e), { root: e, canvasWrap: t, galleryEl: g, infoEl: o, tooltip: i, dropOverlay: s, addInput: E, clearBtn: h };
+  let n, B;
+  if (A.controls) {
+    const l = document.createElement("div");
+    l.className = "csv-add-bar";
+    const h = document.createElement("label");
+    h.className = "csv-add-btn", h.textContent = "+ Add", n = document.createElement("input"), n.type = "file", n.multiple = !0, n.accept = ".litematic,.schematic,.schem,.json", n.className = "csv-add-input", h.appendChild(n), l.appendChild(h), B = document.createElement("button"), B.className = "csv-add-btn", B.textContent = "Clear", l.appendChild(B), e.appendChild(l);
+  } else
+    n = document.createElement("input"), n.type = "file", n.style.display = "none", B = document.createElement("button"), B.style.display = "none";
+  return a.appendChild(e), { root: e, canvasWrap: t, galleryEl: g, infoEl: o, tooltip: i, dropOverlay: s, addInput: n, clearBtn: B };
 }
 function xr(a, A, e, t) {
   a.innerHTML = "";

@@ -100,25 +100,36 @@ export function createViewerDOM(container: HTMLElement, opts: {
     root.appendChild(dropOverlay);
   }
 
-  const addBar = document.createElement("div");
-  addBar.className = "csv-add-bar";
-  const addBtn = document.createElement("label");
-  addBtn.className = "csv-add-btn";
-  addBtn.textContent = "+ Add";
-  const addInput = document.createElement("input");
-  addInput.type = "file";
-  addInput.multiple = true;
-  addInput.accept = ".litematic,.schematic,.schem,.json";
-  addInput.className = "csv-add-input";
-  addBtn.appendChild(addInput);
-  addBar.appendChild(addBtn);
+  let addInput: HTMLInputElement;
+  let clearBtn: HTMLButtonElement;
 
-  const clearBtn = document.createElement("button");
-  clearBtn.className = "csv-add-btn";
-  clearBtn.textContent = "Clear";
-  addBar.appendChild(clearBtn);
+  if (opts.controls) {
+    const addBar = document.createElement("div");
+    addBar.className = "csv-add-bar";
+    const addBtn = document.createElement("label");
+    addBtn.className = "csv-add-btn";
+    addBtn.textContent = "+ Add";
+    addInput = document.createElement("input");
+    addInput.type = "file";
+    addInput.multiple = true;
+    addInput.accept = ".litematic,.schematic,.schem,.json";
+    addInput.className = "csv-add-input";
+    addBtn.appendChild(addInput);
+    addBar.appendChild(addBtn);
 
-  root.appendChild(addBar);
+    clearBtn = document.createElement("button");
+    clearBtn.className = "csv-add-btn";
+    clearBtn.textContent = "Clear";
+    addBar.appendChild(clearBtn);
+
+    root.appendChild(addBar);
+  } else {
+    addInput = document.createElement("input");
+    addInput.type = "file";
+    addInput.style.display = "none";
+    clearBtn = document.createElement("button");
+    clearBtn.style.display = "none";
+  }
 
   container.appendChild(root);
 
