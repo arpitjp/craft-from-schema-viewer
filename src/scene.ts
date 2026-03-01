@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { SchematicData, BlockHoverInfo } from "./types";
 import { DEFAULT_BACKGROUND, DEFAULT_FOV, DEFAULT_MAX_PIXEL_RATIO, MOVE_SPEED, ROTATE_SPEED } from "./constants";
+import { getBlockTexture } from "./textures";
 
 export interface SceneConfig {
   container: HTMLElement;
@@ -187,10 +188,9 @@ export class SceneManager {
     const lookup = new Map<string, { bid: string; x: number; y: number; z: number }>();
 
     for (const [bid, coords] of Object.entries(cg)) {
-      const rgb = data.palette[bid] ?? [128, 128, 128];
-      const mat = new THREE.MeshLambertMaterial({
-        color: new THREE.Color(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255),
-      });
+      const rgb = data.palette[bid] ?? [128, 128, 128] as [number, number, number];
+      const tex = getBlockTexture(bid, rgb as [number, number, number]);
+      const mat = new THREE.MeshLambertMaterial({ map: tex });
       const cnt = coords.length / 3;
       const mesh = new THREE.InstancedMesh(geo, mat, cnt);
       const d = new THREE.Object3D();
