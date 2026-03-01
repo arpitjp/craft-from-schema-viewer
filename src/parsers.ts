@@ -26,7 +26,7 @@ async function getNbt(): Promise<{ parse: Function; simplify: Function }> {
 
 async function parseNBT(buffer: ArrayBuffer): Promise<SimplifiedNBT> {
   const nbt = await getNbt();
-  const { parsed } = await nbt.parse(new Uint8Array(buffer) as any);
+  const { parsed } = await nbt.parse(buffer);
   return nbt.simplify(parsed) as SimplifiedNBT;
 }
 

@@ -1713,7 +1713,7 @@ async function Jr() {
   return X;
 }
 async function Nr(a) {
-  const A = await Jr(), { parsed: e } = await A.parse(new Uint8Array(a));
+  const A = await Jr(), { parsed: e } = await A.parse(a);
   return A.simplify(e);
 }
 const Ir = {
